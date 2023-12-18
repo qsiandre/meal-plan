@@ -1,0 +1,12 @@
+[ "Jean's Favorite Martini", "https://www.traderjoes.com/content/dam/trjo/context-images/58089-blue-chalkadiki-olives-pdp.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+  [ "Ice cubes (for shaking)", "3 ounces of your favorite TJ's vodka, chilled", "3 TJ's Blue Cheese Stuffed Chalkidiki Olives",
+    "Wooden pick for skewering olives (optional)"
+  ], [ "Serves 1", "Time 5 mins" ]
+]
+[ "Chimichurri Fettuccine", "https://www.traderjoes.com/content/dam/trjo/context-images/58643-gf-fettucinie-pasta-pdp.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg",
+  [ "2 tablespoons of your favorite TJ’s Olive Oil",
+    "1 bag (or 1 pound) TJ’s Raw Uncooked Argentinian Red Shrimp, thawed according to package instructions and patted dry",
+    "1 package TJ’s Gluten Free Egg Fettucine Pasta, cooked according to package instructions",
+    "½ cup TJ’s Chimichurri Sauce"
+  ], [ "Serves 4", "Time 25 mins" ]
+]
