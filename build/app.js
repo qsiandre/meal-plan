@@ -38397,24 +38397,71 @@ var require_jsx_dev_runtime = __commonJS((exports, module) => {
 
 // src/app.tsx
 var client = __toESM(require_client(), 1);
-var import_react = __toESM(require_react(), 1);
+var import_react2 = __toESM(require_react(), 1);
 
-// src/web/__generated__/AppQuery.graphql.ts
+// src/web/__generated__/AppBuildRecipesMutation.graphql.ts
 var node = function() {
   var v0 = [
     {
+      defaultValue: null,
+      kind: "LocalArgument",
+      name: "urls"
+    }
+  ], v1 = [
+    {
       alias: null,
-      args: null,
-      concreteType: "User",
+      args: [
+        {
+          kind: "Variable",
+          name: "urls",
+          variableName: "urls"
+        }
+      ],
+      concreteType: "Recipe",
       kind: "LinkedField",
-      name: "me",
-      plural: false,
+      name: "build_recipes",
+      plural: true,
       selections: [
         {
           alias: null,
           args: null,
           kind: "ScalarField",
-          name: "name",
+          name: "url",
+          storageKey: null
+        },
+        {
+          alias: null,
+          args: null,
+          kind: "ScalarField",
+          name: "title",
+          storageKey: null
+        },
+        {
+          alias: null,
+          args: null,
+          kind: "ScalarField",
+          name: "image",
+          storageKey: null
+        },
+        {
+          alias: null,
+          args: null,
+          kind: "ScalarField",
+          name: "ingredients",
+          storageKey: null
+        },
+        {
+          alias: null,
+          args: null,
+          kind: "ScalarField",
+          name: "serves",
+          storageKey: null
+        },
+        {
+          alias: null,
+          args: null,
+          kind: "ScalarField",
+          name: "time",
           storageKey: null
         }
       ],
@@ -38423,42 +38470,276 @@ var node = function() {
   ];
   return {
     fragment: {
-      argumentDefinitions: [],
+      argumentDefinitions: v0,
       kind: "Fragment",
       metadata: null,
-      name: "AppQuery",
-      selections: v0,
-      type: "Query",
+      name: "AppBuildRecipesMutation",
+      selections: v1,
+      type: "Mutation",
       abstractKey: null
     },
     kind: "Request",
     operation: {
-      argumentDefinitions: [],
+      argumentDefinitions: v0,
       kind: "Operation",
-      name: "AppQuery",
-      selections: v0
+      name: "AppBuildRecipesMutation",
+      selections: v1
     },
     params: {
-      cacheID: "e5e6e9592e8e099d2a573b8130cb3ebd",
+      cacheID: "7e26ab84525155e5578492b666524f00",
       id: null,
       metadata: {},
-      name: "AppQuery",
-      operationKind: "query",
-      text: "query AppQuery {\n  me {\n    name\n  }\n}\n"
+      name: "AppBuildRecipesMutation",
+      operationKind: "mutation",
+      text: "mutation AppBuildRecipesMutation(\n  $urls: [String!]!\n) {\n  build_recipes(urls: $urls) {\n    url\n    title\n    image\n    ingredients\n    serves\n    time\n  }\n}\n"
     }
   };
 }();
-node.hash = "80c2f1a2f18c1334ec6f842f6e46b677";
-var AppQuery_graphql_default = node;
+node.hash = "ffe553c33e281b2b2685b51bfde72714";
+var AppBuildRecipesMutation_graphql_default = node;
 
 // src/web/App.tsx
+var import_react = __toESM(require_react(), 1);
 var import_react_relay = __toESM(require_lib2(), 1);
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
-function App() {
-  const data = import_react_relay.useLazyLoadQuery(AppQuery_graphql_default, {});
-  return jsx_dev_runtime.jsxDEV("pre", {
-    children: JSON.stringify(data, null, 4)
+var match = function(matchers, node2) {
+  switch (node2.step) {
+    case "select_recipes":
+      return matchers.select_recipes(node2);
+    case "edit_ingredients":
+      return matchers.edit_ingredients(node2);
+    case "review":
+      return matchers.review(node2);
+  }
+  return null;
+};
+var SelectRecipes = function(props) {
+  const [recipes, setRecipes] = import_react.useState(props.recipes);
+  const inputRef = import_react.useRef(null);
+  const formRef = import_react.useRef(null);
+  const [commit, isInFlight] = import_react_relay.useMutation(AppBuildRecipesMutation_graphql_default);
+  return jsx_dev_runtime.jsxDEV(import_react.Suspense, {
+    fallback: "Loading...",
+    children: jsx_dev_runtime.jsxDEV("div", {
+      children: [
+        isInFlight ? "Committing..." : null,
+        jsx_dev_runtime.jsxDEV("ul", {
+          children: recipes.map((r, ix) => jsx_dev_runtime.jsxDEV("li", {
+            children: [
+              r,
+              " ",
+              jsx_dev_runtime.jsxDEV("button", {
+                children: "x"
+              }, undefined, false, undefined, this)
+            ]
+          }, ix, true, undefined, this))
+        }, undefined, false, undefined, this),
+        jsx_dev_runtime.jsxDEV("form", {
+          ref: formRef,
+          onSubmit: (e) => {
+            e.preventDefault();
+            const url = inputRef.current?.value;
+            if (url != null) {
+              setRecipes((r) => [...r, url]);
+            }
+            formRef.current?.reset();
+          },
+          children: [
+            jsx_dev_runtime.jsxDEV("input", {
+              ref: inputRef,
+              name: "selection",
+              placeholder: "Enter URL"
+            }, undefined, false, undefined, this),
+            jsx_dev_runtime.jsxDEV("button", {
+              children: "+"
+            }, undefined, false, undefined, this)
+          ]
+        }, undefined, true, undefined, this),
+        jsx_dev_runtime.jsxDEV("button", {
+          onClick: () => {
+            commit({
+              variables: { urls: recipes },
+              onCompleted: (data) => {
+                const responses = data.build_recipes;
+                if (responses == null) {
+                  console.error("mutation failed");
+                  return;
+                }
+                const recipes2 = responses.map((r) => r);
+                props.onNextStep(recipes2);
+              }
+            });
+          },
+          children: "Next"
+        }, undefined, false, undefined, this)
+      ]
+    }, undefined, true, undefined, this)
   }, undefined, false, undefined, this);
+};
+var ReadOnlyRecipes = function(props) {
+  return jsx_dev_runtime.jsxDEV("div", {
+    children: [
+      props.recipes.map((r, ix) => jsx_dev_runtime.jsxDEV("div", {
+        children: r
+      }, ix, false, undefined, this)),
+      jsx_dev_runtime.jsxDEV("button", {
+        onClick: props.onEdit,
+        children: " Edit "
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+};
+var EditableRecipe = function(props) {
+  const { ingredients, ...rest } = props.recipe;
+  const inputsRef = import_react.useRef([]);
+  return jsx_dev_runtime.jsxDEV("div", {
+    children: [
+      jsx_dev_runtime.jsxDEV("pre", {
+        children: JSON.stringify(rest, null, 4)
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime.jsxDEV("form", {
+        onSubmit: (e) => {
+          e.preventDefault();
+          if (ingredients == null) {
+            return;
+          }
+          const edited = [];
+          for (let ix = 0;ix < ingredients.length; ix++) {
+            edited.push(inputsRef.current[ix]?.value || ingredients[ix]);
+          }
+          props.onSave({ ...props.recipe, ingredients: edited });
+        },
+        children: [
+          ingredients?.map((i, ix) => jsx_dev_runtime.jsxDEV("div", {
+            children: jsx_dev_runtime.jsxDEV("input", {
+              ref: (e) => {
+                if (inputsRef.current) {
+                  inputsRef.current[ix] = e;
+                }
+              },
+              defaultValue: i
+            }, i, false, undefined, this)
+          }, undefined, false, undefined, this)),
+          jsx_dev_runtime.jsxDEV("div", {
+            children: jsx_dev_runtime.jsxDEV("button", {
+              children: "Save"
+            }, undefined, false, undefined, this)
+          }, undefined, false, undefined, this)
+        ]
+      }, undefined, true, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+};
+var toIngredients = function(recipes) {
+  const ingredient_x_recipe = new Map;
+  for (const r of recipes) {
+    for (const i of r.ingredients || []) {
+      const ingredient = ingredient_x_recipe.get(i) || { name: i, recipes: [] };
+      ingredient.recipes.push(r);
+      ingredient_x_recipe.set(i, ingredient);
+    }
+  }
+  return Array.from(ingredient_x_recipe.values());
+};
+var MakeEdits = function(props) {
+  const [draft, setDraft] = import_react.useState(props.edits.recipes);
+  return jsx_dev_runtime.jsxDEV("div", {
+    children: [
+      props.edits.recipes.map((r, ix) => jsx_dev_runtime.jsxDEV(EditableRecipe, {
+        recipe: r,
+        onSave: (changed) => setDraft((rs) => rs.map((r2, i) => ix === i ? changed : r2))
+      }, `${ix}-${r.title}`, false, undefined, this)),
+      jsx_dev_runtime.jsxDEV("button", {
+        onClick: () => props.onNext({ ...props.edits, recipes: draft }),
+        children: "Next"
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+};
+var ReadOnlyEdit = function(props) {
+  return jsx_dev_runtime.jsxDEV("button", {
+    onClick: props.onEdit,
+    children: "Edit"
+  }, undefined, false, undefined, this);
+};
+var ReviewGroceries = function(props) {
+  return jsx_dev_runtime.jsxDEV("ul", {
+    children: props.review.ingredients.map((i) => jsx_dev_runtime.jsxDEV("li", {
+      children: i.name
+    }, i.name, false, undefined, this))
+  }, undefined, false, undefined, this);
+};
+function App() {
+  const [node2, setNode] = import_react.useState({ step: "select_recipes", urls: [] });
+  const goToSelectRecipes = (urls) => setNode({ step: "select_recipes", urls });
+  return jsx_dev_runtime.jsxDEV("main", {
+    children: [
+      jsx_dev_runtime.jsxDEV("h1", {
+        children: " Trader Joe's Weekly "
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime.jsxDEV("section", {
+        children: [
+          jsx_dev_runtime.jsxDEV("h2", {
+            children: " Step 1: Enter URLs "
+          }, undefined, false, undefined, this),
+          match({
+            edit_ingredients: (edit) => jsx_dev_runtime.jsxDEV(ReadOnlyRecipes, {
+              recipes: edit.recipes.map((r) => r.url),
+              onEdit: () => goToSelectRecipes(edit.recipes.map((r) => r.url))
+            }, undefined, false, undefined, this),
+            select_recipes: (select) => jsx_dev_runtime.jsxDEV(SelectRecipes, {
+              recipes: select.urls,
+              onNextStep: (recipes) => {
+                setNode({
+                  step: "edit_ingredients",
+                  recipes
+                });
+              }
+            }, undefined, false, undefined, this),
+            review: (review) => jsx_dev_runtime.jsxDEV(ReadOnlyRecipes, {
+              recipes: review.recipes.map((r) => r.url),
+              onEdit: () => goToSelectRecipes(review.recipes.map((r) => r.url))
+            }, undefined, false, undefined, this)
+          }, node2)
+        ]
+      }, undefined, true, undefined, this),
+      jsx_dev_runtime.jsxDEV("section", {
+        children: [
+          jsx_dev_runtime.jsxDEV("h2", {
+            children: " Step 2: Edit ingredients "
+          }, undefined, false, undefined, this),
+          match({
+            select_recipes: () => null,
+            edit_ingredients: (edits) => jsx_dev_runtime.jsxDEV(MakeEdits, {
+              edits,
+              onNext: (edit) => setNode({
+                step: "review",
+                ingredients: toIngredients(edit.recipes),
+                recipes: edit.recipes
+              })
+            }, undefined, false, undefined, this),
+            review: (review) => jsx_dev_runtime.jsxDEV(ReadOnlyEdit, {
+              onEdit: () => setNode({ step: "edit_ingredients", recipes: review.recipes })
+            }, undefined, false, undefined, this)
+          }, node2)
+        ]
+      }, undefined, true, undefined, this),
+      jsx_dev_runtime.jsxDEV("section", {
+        children: [
+          jsx_dev_runtime.jsxDEV("h2", {
+            children: " Step 3: Review grocery list"
+          }, undefined, false, undefined, this),
+          match({
+            select_recipes: () => null,
+            edit_ingredients: () => null,
+            review: (review) => jsx_dev_runtime.jsxDEV(ReviewGroceries, {
+              review
+            }, undefined, false, undefined, this)
+          }, node2)
+        ]
+      }, undefined, true, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
 }
 
 // src/app.tsx
@@ -38471,12 +38752,12 @@ var createEnvironment = function() {
   return new import_relay_runtime.Environment({ store, network });
 };
 var AppShell = function() {
-  const environment = import_react.useMemo(() => {
+  const environment = import_react2.useMemo(() => {
     return createEnvironment();
   }, []);
   return jsx_dev_runtime2.jsxDEV(import_react_relay2.RelayEnvironmentProvider, {
     environment,
-    children: jsx_dev_runtime2.jsxDEV(import_react.Suspense, {
+    children: jsx_dev_runtime2.jsxDEV(import_react2.Suspense, {
       fallback: "Loading...",
       children: jsx_dev_runtime2.jsxDEV(App, {}, undefined, false, undefined, this)
     }, undefined, false, undefined, this)
@@ -38493,7 +38774,7 @@ var fetchFn = (params, variables) => {
   });
   return import_relay_runtime.Observable.from(response.then((data) => data.json()));
 };
-var root = client.createRoot(document.body);
+var root = client.createRoot(body);
 root.render(jsx_dev_runtime2.jsxDEV(AppShell, {}, undefined, false, undefined, this));
 
-//# debugId=7CB59874336B712064756e2164756e21
+//# debugId=E409AEFB432311DC64756e2164756e21

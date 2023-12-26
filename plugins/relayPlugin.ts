@@ -57,10 +57,7 @@ function compile(file: string, contents: string, opts: CompileOptions): string {
       .digest("hex");
 
     const id = `graphql__${hash}`;
-    const importPath = getRelativeImportPath(
-      file,
-      opts.artifactDirectory,
-    );
+    const importPath = getRelativeImportPath(opts.artifactDirectory, name);
 
     let result = id;
 
@@ -103,17 +100,19 @@ function getErrorMessage(name: string, buildCommand: string) {
 
 function getRelativeImportPath(
   artifactDirectory: string,
-  fileToRequire: string
+  artifact: string
 ): string {
-  return `./${path.join(artifactDirectory, fileToRequire)}`;
+  return `./${artifactDirectory}/${artifact}.graphql.ts`;
 }
 
 export const relay: BunPlugin = {
   name: "extract relay",
   setup(build) {
-    build.onLoad({ filter: /\.tsx$/ , namespace: "file"}, ({ path}) => {
+    build.onLoad({ filter: /\.(tsx|ts)$/, namespace: "file" }, ({ path }) => {
       const file = readFileSync(path, "utf8");
-      const contents = compile(path, file, { artifactDirectory: "./__generated__"});
+      const contents = compile(path, file, {
+        artifactDirectory: "__generated__",
+      });
       return { contents, loader: "tsx" };
     });
   },

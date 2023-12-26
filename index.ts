@@ -1,5 +1,7 @@
 import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
+import { ParsedRecipe, parseURLs } from "./src/scrape/scrape";
+import puppeteer from "puppeteer";
 
 /** @gqlType */
 export type Query = unknown;
@@ -16,16 +18,59 @@ class User {
   }
   /** @gqlField */
   name!: string;
-
-  /** @gqlField */
-  greet(args: { greeting: string }): string {
-    return `${args.greeting}, ${this.name}`;
-  }
 }
 
+/** @gqlType */
+class Recipe {
+  constructor(props: ParsedRecipe) {
+    this.url = props.url;
+    this.title = props.title;
+    this.ingredients = props.ingredients;
+    this.serves = props.serves;
+    this.time = props.time;
+    this.image = props.image;
+  }
+  /**
+   * @gqlField
+   */
+  image: string | null;
+  /**
+   * @gqlField
+   */
+  serves: string | null;
+
+  /**
+   * @gqlField
+   */
+  time: string | null;
+
+  /**
+   * @gqlField
+   */
+  ingredients: string[] | null;
+  /**
+   * @gqlField
+   * @killsParentOnException
+   */
+  url: string;
+  /**
+   * @gqlField
+   * @killsParentOnException
+   */
+  title: string;
+}
+
+/** @gqlType */
+export type Mutation = unknown;
+
+const browser = await puppeteer.launch({ headless: "new" });
 /** @gqlField */
-export function allUsers(_: Query): User[] {
-  return [new User("me")];
+export async function build_recipes(
+  _: Mutation,
+  args: { urls: Array<string> }
+): Promise<Recipe[]> {
+  const parsed = await parseURLs(browser, args.urls);
+  return parsed.map((r) => new Recipe(r));
 }
 
 const yoga = createYoga({ schema });
@@ -65,3 +110,7 @@ const server = Bun.serve({
 });
 
 console.log(`Listening on http://localhost:${server.port} ...`);
+
+process.on("SIGINT", () => {
+  process.exit(0);
+});

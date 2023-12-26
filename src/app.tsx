@@ -11,6 +11,8 @@ import {
 import type { IEnvironment, FetchFunction } from "relay-runtime";
 import { RelayEnvironmentProvider } from "react-relay";
 
+declare const body: Element;
+
 const fetchFn: FetchFunction = (params, variables) => {
   const response = fetch("/graphql", {
     method: "POST",
@@ -30,7 +32,7 @@ function createEnvironment(): IEnvironment {
   return new Environment({ store, network });
 }
 
-const root = createRoot(document.body);
+const root = createRoot(body);
 
 function AppShell() {
   const environment = useMemo(() => {
