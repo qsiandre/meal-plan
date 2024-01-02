@@ -28,3 +28,12 @@ exports[`App edits ingredients from a recipe 1`] = `
 A few shakes of TJ’s 21 Seasoning Salute
 4 TJ’s Eggs Edit"
 `;
+
+exports[`App edits ingredients from a recipe 2`] = `
+"1 can TJ’s Greek Chickpeas with Parsley & Cumin
+1 TJ’s Red Onion, chopped
+1 TJ’s Red Bell Pepper, chopped
+1 teaspoon TJ’s Smoked Paprika
+A few shakes of TJ’s 21 Seasoning Salute
+4 TJ’s Eggs Edit"
+`;

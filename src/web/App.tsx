@@ -1,39 +1,32 @@
 import { Suspense, useRef, useState } from "react";
 import { graphql, useMutation } from "react-relay";
 import { AppBuildRecipesMutation } from "./__generated__/AppBuildRecipesMutation.graphql";
-
-type Recipe = NonNullable<
-  AppBuildRecipesMutation["response"]["build_recipes"]
->[number];
-
-type Ingredient = {
-  name: string;
-  recipes: Recipe[];
-};
-type SelectRecipes = { step: "select_recipes"; urls: Array<string> };
-type EditIngredients = { step: "edit_ingredients"; recipes: Array<Recipe> };
-type Review = {
-  step: "review";
-  recipes: Recipe[];
-  ingredients: Ingredient[];
-};
-type Node = SelectRecipes | EditIngredients | Review;
+import {
+  Recipe,
+  Review,
+  SelectRecipes,
+  EditIngredients,
+  Node,
+  Ingredient,
+} from "./Core";
+import { EditableRecipe } from "./EditableRecipe";
+import { PrimaryButton } from "./PrimaryButton";
 
 function match<Resolved>(
-  matchers: {
+  matchers: Partial<{
     select_recipes: (node: SelectRecipes) => Resolved;
     edit_ingredients: (node: EditIngredients) => Resolved;
     review: (node: Review) => Resolved;
-  },
+  }>,
   node: Node
-): Resolved | null {
+): Resolved | null | undefined {
   switch (node.step) {
     case "select_recipes":
-      return matchers.select_recipes(node);
+      return matchers.select_recipes?.(node);
     case "edit_ingredients":
-      return matchers.edit_ingredients(node);
+      return matchers.edit_ingredients?.(node);
     case "review":
-      return matchers.review(node);
+      return matchers.review?.(node);
   }
   return null;
 }
@@ -60,11 +53,15 @@ function SelectRecipes(props: {
   return (
     <Suspense fallback={"Loading..."}>
       <div>
-        {isInFlight ? "Committing..." : null}
         <ul>
           {recipes.map((r, ix) => (
-            <li key={ix}>
-              {r} <button>x</button>
+            <li key={`${ix}-${r}`}>
+              <span className="cx_rightpad_s">{r}</span>
+              <button
+                onClick={() => setRecipes((rs) => rs.filter((e) => e != r))}
+              >
+                x
+              </button>
             </li>
           ))}
         </ul>
@@ -73,37 +70,48 @@ function SelectRecipes(props: {
           onSubmit={(e) => {
             e.preventDefault();
             const url = inputRef.current?.value;
-            if (url != null) {
-              setRecipes((r) => [...r, url]);
+            if (url != null && url.trim().length > 0) {
+              setRecipes((r) => [...r, url.trim()]);
             }
             formRef.current?.reset();
           }}
         >
-          <input
-            ref={inputRef}
-            name="selection"
-            placeholder="Enter URL"
-          ></input>
-          <button>+</button>
+          {isInFlight ? null : (
+            <div className="cx_fullwidth">
+              <input
+                className="recipeSelector_input"
+                ref={inputRef}
+                name="selection"
+                placeholder="Enter URL"
+              ></input>
+              {isInFlight ? null : (
+                <button className="recipeSelector_action">+</button>
+              )}
+            </div>
+          )}
         </form>
-        <button
-          onClick={() => {
-            commit({
-              variables: { urls: recipes },
-              onCompleted: (data) => {
-                const responses = data.build_recipes;
-                if (responses == null) {
-                  console.error("mutation failed");
-                  return;
-                }
-                const recipes: Recipe[] = responses.map((r) => r);
-                props.onNextStep(recipes);
-              },
-            });
-          }}
-        >
-          Next
-        </button>
+        {isInFlight ? (
+          "Saving..."
+        ) : (
+          <PrimaryButton
+            disabled={recipes.length == 0}
+            label="Next"
+            onClick={() => {
+              commit({
+                variables: { urls: recipes },
+                onCompleted: (data) => {
+                  const responses = data.build_recipes;
+                  if (responses == null) {
+                    console.error("mutation failed");
+                    return;
+                  }
+                  const recipes: Recipe[] = responses.map((r) => r);
+                  props.onNextStep(recipes);
+                },
+              });
+            }}
+          />
+        )}
       </div>
     </Suspense>
   );
@@ -113,52 +121,11 @@ function ReadOnlyRecipes(props: { recipes: string[]; onEdit: () => void }) {
   return (
     <div>
       {props.recipes.map((r, ix) => (
-        <div key={ix}>{r}</div>
-      ))}
-      <button onClick={props.onEdit}> Edit </button>
-    </div>
-  );
-}
-
-function EditableRecipe(props: {
-  recipe: Recipe;
-  onSave: (r: Recipe) => void;
-}) {
-  const { ingredients, ...rest } = props.recipe;
-  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
-  return (
-    <div>
-      <pre>{JSON.stringify(rest, null, 4)}</pre>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (ingredients == null) {
-            return;
-          }
-          const edited: string[] = [];
-          for (let ix = 0; ix < ingredients.length; ix++) {
-            edited.push(inputsRef.current[ix]?.value || ingredients[ix]);
-          }
-          props.onSave({ ...props.recipe, ingredients: edited });
-        }}
-      >
-        {ingredients?.map((i, ix) => (
-          <div>
-            <input
-              ref={(e) => {
-                if (inputsRef.current) {
-                  inputsRef.current[ix] = e;
-                }
-              }}
-              key={i}
-              defaultValue={i}
-            ></input>
-          </div>
-        ))}
-        <div>
-          <button>Save</button>
+        <div key={`${ix}-${r}`} className="cx_padding_s">
+          {r}
         </div>
-      </form>
+      ))}
+      <PrimaryButton label="Edit" onClick={props.onEdit} />
     </div>
   );
 }
@@ -191,15 +158,16 @@ function MakeEdits(props: {
           }
         />
       ))}
-      <button onClick={() => props.onNext({ ...props.edits, recipes: draft })}>
-        Next
-      </button>
+      <PrimaryButton
+        label="Next"
+        onClick={() => props.onNext({ ...props.edits, recipes: draft })}
+      />
     </div>
   );
 }
 
 function ReadOnlyEdit(props: { onEdit: () => void }) {
-  return <button onClick={props.onEdit}>Edit</button>;
+  return <PrimaryButton label="Edit" onClick={props.onEdit} />;
 }
 
 function ReviewGroceries(props: { review: Review }) {
@@ -256,7 +224,6 @@ export function App() {
         <h2> Step 2: Edit ingredients </h2>
         {match(
           {
-            select_recipes: () => null,
             edit_ingredients: (edits) => (
               <MakeEdits
                 edits={edits}
@@ -284,8 +251,6 @@ export function App() {
         <h2> Step 3: Review grocery list</h2>
         {match(
           {
-            select_recipes: () => null,
-            edit_ingredients: () => null,
             review: (review) => <ReviewGroceries review={review} />,
           },
           node

@@ -181,3 +181,4 @@ __generated__
 package-lock.json
 schema.graphql
 schema.ts
+build

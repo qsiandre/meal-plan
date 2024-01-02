@@ -3,7 +3,7 @@ import { watch } from "fs";
 
 async function build() {
   const result = await Bun.build({
-    entrypoints: ["./src/app.tsx"],
+    entrypoints: ["./src/app.tsx", "./src/playground.tsx"],
     outdir: "./build",
     plugins: [relay],
     target: "browser",

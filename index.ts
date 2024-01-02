@@ -63,12 +63,12 @@ class Recipe {
 /** @gqlType */
 export type Mutation = unknown;
 
-const browser = await puppeteer.launch({ headless: "new" });
 /** @gqlField */
 export async function build_recipes(
   _: Mutation,
   args: { urls: Array<string> }
 ): Promise<Recipe[]> {
+  const browser = await puppeteer.launch({ headless: "new" });
   const parsed = await parseURLs(browser, args.urls);
   return parsed.map((r) => new Recipe(r));
 }
@@ -77,9 +77,13 @@ const yoga = createYoga({ schema });
 
 const index = {
   matcher: (r: Request) => r.method === "GET",
-  response: async (_: Request) => new Response(Bun.file("./src/index.html")),
+  response: async (_: Request) => new Response(Bun.file("./static/index.html")),
 };
-
+const playground = {
+  matcher: (r: Request) => r.method === "GET" && r.url.endsWith("playground"),
+  response: async (_: Request) =>
+    new Response(Bun.file("./static/playground.html")),
+};
 const appjs = {
   matcher: (r: Request) => r.url.endsWith("app.js"),
   response: async (_: Request) =>
@@ -87,16 +91,34 @@ const appjs = {
       headers: { "X-SourceMap": "app.js.map" },
     }),
 };
+const playgroundjs = {
+  matcher: (r: Request) => r.url.endsWith("playground.js"),
+  response: async (_: Request) =>
+    new Response(Bun.file("./build/playground.js"), {
+      headers: { "X-SourceMap": "playground.js.map" },
+    }),
+};
+const appcss = {
+  matcher: (r: Request) => r.url.endsWith("app.css"),
+  response: async (_: Request) => new Response(Bun.file("./static/app.css")),
+};
 const appjsmap = {
   matcher: (r: Request) => r.url.endsWith("app.js.map"),
   response: async (_: Request) => new Response(Bun.file("./build/app.js.map")),
 };
-
 const graphql = {
   matcher: (r: Request) => r.url.includes("/graphql"),
   response: async (r: Request) => await yoga.handle(r),
 };
-const handlers = [graphql, appjs, appjsmap, index];
+const handlers = [
+  graphql,
+  appjs,
+  appcss,
+  appjsmap,
+  playgroundjs,
+  playground,
+  index,
+];
 
 const server = Bun.serve({
   port: 3000,

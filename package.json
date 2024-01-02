@@ -8,7 +8,9 @@
     "react-relay": "^16.1.0"
   },
   "scripts": {
-    "relay": "bun run relay-compiler ./relay.config.json"
+    "relay": "bun run relay-compiler ./relay.config.json",
+    "server": "bun run index.ts",
+    "bundler": "bun run bundle.ts"
   },
   "name": "tradersmealplan",
   "module": "index.ts",
