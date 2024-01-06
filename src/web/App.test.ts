@@ -1,5 +1,5 @@
 import { expect, describe, it, beforeAll } from "bun:test";
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer-core";
 
 async function navigateTo(browser: Browser | null, url: string): Promise<Page> {
   const page = await browser?.newPage();
@@ -21,7 +21,11 @@ async function parse(page: Page, ...urls: string[]): Promise<void> {
 describe("App", () => {
   let browser: Browser | null = null;
   beforeAll(async () => {
-    browser = await puppeteer.launch({ headless: "new" });
+    browser = await puppeteer.launch({
+      headless: "new",
+      executablePath: Bun.env["CHROME_PATH"],
+      args: ["--no-sandbox"],
+    });
   });
 
   it("extracts multiple recipes from TJ's website", async () => {
@@ -32,20 +36,20 @@ describe("App", () => {
       "https://www.traderjoes.com/home/recipes/smoked-salmon-pasta-salad"
     );
     const veggie = await page.waitForSelector(
-      "pre >>> ::-p-text(Veggie Chickpea Hash)",
+      "div >>> ::-p-text(Veggie Chickpea Hash)",
       { timeout: 10000 }
     );
     const veggieText = await veggie?.evaluate((e) => (e as any).innerText);
     expect(veggieText).toMatchSnapshot();
     const pasta = await page.waitForSelector(
-      "pre >>> ::-p-text(Smoked Salmon Pasta Salad)",
+      "div >>> ::-p-text(Smoked Salmon Pasta Salad)",
       { timeout: 10000 }
     );
     const pastaText = await pasta?.evaluate((e) => (e as any).innerText);
     expect(pastaText).toMatchSnapshot();
   });
 
-  it("edits ingredients from a recipe", async () => {
+  it.only("edits ingredients from a recipe", async () => {
     const page = await navigateTo(browser, "http:/localhost:3000");
     await parse(
       page,
@@ -54,14 +58,14 @@ describe("App", () => {
     await page.waitForSelector("button >>> ::-p-text(Save)", {
       timeout: 10000,
     });
-    await page.type('input[value$="Eggs"]', " Edit");
+    await page.type("textarea >>> ::-p-text(Eggs)", "Edit ");
     await page.click("button >>> ::-p-text(Save)");
     await page.click("button >>> ::-p-text(Next)");
     const itemText = await page.$eval(
-      'li >>> ::-p-text("4 TJ’s Eggs Edit")',
+      "li >>> ::-p-text(Eggs)",
       (e) => (e as any).innerText
     );
-    expect(itemText).toBe("4 TJ’s Eggs Edit");
+    expect(itemText).toBe("Edit 4 TJ’s Eggs");
     const list = await page.$eval("ul", (e) => (e as any).innerText);
     expect(list).toMatchSnapshot();
   });

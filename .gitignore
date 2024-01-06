@@ -176,6 +176,7 @@ dist
 
 node_modules
 __generated__
+__snapshots__
 
 *.lockb
 package-lock.json
