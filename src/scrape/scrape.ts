@@ -1,4 +1,4 @@
-import puppeteer, { Browser } from "puppeteer";
+import { Browser } from "puppeteer-core";
 
 export type ParsedRecipe = {
   title: string;

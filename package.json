@@ -2,7 +2,7 @@
   "dependencies": {
     "graphql-yoga": "^5.0.2",
     "grats": "^0.0.10",
-    "puppeteer": "^21.6.1",
+    "puppeteer-core": "^21.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-relay": "^16.1.0"

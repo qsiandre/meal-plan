@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: meal-plan-ingress
+spec:
+  rules:
+    - host: meal-plan.avohome
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: meal-plan-server
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meal-plan-server
+spec:
+  selector:
+    app: meal-plan-server
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meal-plan-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meal-plan-server
+  template:
+    metadata:
+      labels:
+        app: meal-plan-server
+    spec:
+      containers:
+        - name: app
+          image: registry.avohome/meal-plan
+          ports:
+            - containerPort: 3000
+          imagePullPolicy: Always
