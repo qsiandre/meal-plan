@@ -1,5 +1,6 @@
 import { expect, describe, it, beforeAll } from "bun:test";
-import puppeteer, { Browser, Page } from "puppeteer-core";
+import { Browser, Page } from "puppeteer-core";
+import { genBrowser } from "../scrape/scrape";
 
 async function navigateTo(browser: Browser | null, url: string): Promise<Page> {
   const page = await browser?.newPage();
@@ -21,11 +22,7 @@ async function parse(page: Page, ...urls: string[]): Promise<void> {
 describe("App", () => {
   let browser: Browser | null = null;
   beforeAll(async () => {
-    browser = await puppeteer.launch({
-      headless: "new",
-      executablePath: Bun.env["CHROME_PATH"],
-      args: ["--no-sandbox"],
-    });
+    browser = await genBrowser();
   });
 
   it("extracts multiple recipes from TJ's website", async () => {

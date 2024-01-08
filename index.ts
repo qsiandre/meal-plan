@@ -1,6 +1,6 @@
 import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
-import { ParsedRecipe, parseURLs } from "./src/scrape/scrape";
+import { ParsedRecipe, genBrowser, parseDetailURLs } from "./src/scrape/scrape";
 import puppeteer from "puppeteer-core";
 
 /** @gqlType */
@@ -68,12 +68,8 @@ export async function build_recipes(
   _: Mutation,
   args: { urls: Array<string> }
 ): Promise<Recipe[]> {
-  const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: Bun.env["CHROME_PATH"],
-    args: ["--no-sandbox"],
-  });
-  const parsed = await parseURLs(browser, args.urls);
+  const browser = await genBrowser();
+  const parsed = await parseDetailURLs(browser, args.urls);
   return parsed.map((r) => new Recipe(r));
 }
 
