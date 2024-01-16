@@ -15,20 +15,23 @@ export type ParsedRecipe = {
   directions: string[];
 };
 
-// module that runs this daily
+// module that runs this daily: k3s chron, configure to retry 3 times if failure happens, 1 hour after each failure time
 // module that saves urls to db
+// each day, get the number of pages and scrape all url's from each page
+// save the urls to be scraped in db, these will be ready by details scrapper
+
 // module that reads urls from db and saves recipes to table
+// each 15 mins read a list of entries to scrape from pending table and perform an scrape
+// save details inside the dim_daily_recipes table
+// if scrape fails log error in pending table
 
-// function that given a page name returns
-// 1. flag if it doesn't exist
-// 2. list of urls with recipes
-
-async function scrapeDetails(
+export async function scrapeDetails(
   browser: Browser,
   url: string
 ): Promise<ParsedRecipe> {
   const page = await browser.newPage();
   await page.goto(url);
+  await page.waitForSelector("[class*='recipeDetails__categoryItem']");
   const type = page.$eval(
     "[class*='recipeDetails__categoryItem']",
     (e) => e.textContent
@@ -101,7 +104,7 @@ async function scrapeDetails(
 type RecipeDescriptor = {
   name: string | null;
   type: string | null;
-  relativeURL: string;
+  url: string;
 };
 
 export async function scrapeGalleryPagesCount(
@@ -111,7 +114,7 @@ export async function scrapeGalleryPagesCount(
   const page = await browser.newPage();
   await page.goto(url);
   page.waitForNetworkIdle();
-
+  await page.waitForSelector("[class*='Pagination_pagination__lastItem']");
   const pageCounts = await page.$eval(
     "[class*='Pagination_pagination__lastItem']",
     (e) => e.textContent
@@ -126,20 +129,21 @@ export async function scrapeGalleryPagesCount(
   return n;
 }
 
-async function scrapeGallery(
+export async function scrapeGallery(
   browser: Browser,
   url: string
 ): Promise<RecipeDescriptor[]> {
   const page = await browser.newPage();
   await page.goto(url);
   page.waitForNetworkIdle();
+  await page.waitForSelector("a[class*='RecipeGridCard_recipe']");
   const recipes = await page.$$eval("a[class*='RecipeGridCard_recipe']", (e) =>
     e.map((it) => {
       const [type, name] = Array.from(it.children)
         .map((ch) => ch.textContent)
         .filter((x) => x && x.trim().length != 0);
-      const relativeURL = it.href;
-      return { relativeURL, type, name };
+      const url = it.href;
+      return { url, type, name };
     })
   );
   return recipes;

@@ -1,7 +1,12 @@
 import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
 import { ParsedRecipe, genBrowser, parseDetailURLs } from "./src/scrape/scrape";
-import puppeteer from "puppeteer-core";
+
+declare module "bun" {
+  interface Env {
+    HOST: string;
+  }
+}
 
 /** @gqlType */
 export type Query = unknown;

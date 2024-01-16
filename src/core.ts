@@ -8,3 +8,11 @@ export function filterNull<T>(xs: (T | null | undefined)[]): T[] {
   }
   return nonNull;
 }
+
+export function leftpad(n: any): string {
+  const asStr = `${n}`;
+  if (asStr.length == 1) {
+    return `0${asStr}`;
+  }
+  return asStr;
+}

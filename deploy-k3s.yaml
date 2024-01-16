@@ -45,6 +45,56 @@ spec:
       containers:
         - name: app
           image: registry.avohome/meal-plan
+          command: ["bun"]
+          args: ["run", "server"]
           ports:
             - containerPort: 3000
           imagePullPolicy: Always
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: meal-plan-scrape-recipe-worker
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: meal-plan-scrape-recipe-worker
+              image: registry.avohome/meal-plan
+              imagePullPolicy: Always
+              command: ["bun"]
+              args: ["run", "src/scripts/crawlRecipes.ts", "100"]
+              env:
+                - name: HOST
+                  value: "async"
+                - name: RECIPES_PER_BATCH
+                  value: n100
+          restartPolicy: Never
+---
+# to run a single instance use
+# kubectl create job --from=cronjob/create-habit-progress <sync-name/>
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: meal-plan-daily-scrape
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: meal-plan-daily-scrape
+              image: registry.avohome/meal-plan
+              imagePullPolicy: Always
+              command: ["bun"]
+              args: ["run", "src/scripts/dailyGallleryScrape.ts"]
+              env:
+                - name: HOST
+                  value: "async"
+          restartPolicy: Never
