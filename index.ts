@@ -1,6 +1,7 @@
 import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
 import { ParsedRecipe, genBrowser, parseDetailURLs } from "./src/scrape/scrape";
+import { sql } from "./src/sql";
 
 declare module "bun" {
   interface Env {

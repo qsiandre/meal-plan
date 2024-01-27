@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mp-ranker-ingress
+spec:
+  rules:
+    - host: mp-ranker.avohome
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: mp-ranker
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mp-ranker
+spec:
+  selector:
+    app.kubernetes.io/name: mp-ranker
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: http-web-svc
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mp-ranker
+  labels:
+    app.kubernetes.io/name: mp-ranker
+spec:
+  containers:
+    - name: ranker
+      image: registry.avohome/meal-ranker
+      ports:
+        - containerPort: 3000
+          name: http-web-svc
+      imagePullPolicy: Always

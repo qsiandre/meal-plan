@@ -183,3 +183,7 @@ package-lock.json
 schema.graphql
 schema.ts
 build
+
+# notebooks
+env
+.ipynb_checkpoints
