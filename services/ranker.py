@@ -110,7 +110,7 @@ def likely(prefix, inv_index):
     return opts
 
 
-def search(query, inv_index, df):
+def search(query, limit, inv_index, df):
     query_tokens = valid_tokens(query)
     extended = [lk for (lk, _) in likely(query_tokens[-1], inv_index)[:3]]
     with_features = []
@@ -132,16 +132,23 @@ def search(query, inv_index, df):
     with_features.sort(reverse=True, key=lambda e: (e[2], -len(e[1]) if e[1] else 0))
     filtered = []
     used = set()
-    for entry, ext, _, f in with_features:
+    for entry, ext, _, f in with_features[0:limit] if limit else with_features:
         if entry["id"] in used:
             continue
         used.add(entry["id"])
-        filtered.append({"suffix_hint": ext, "features": vars(f)})
+        filtered.append(
+            {
+                "suffix_hint": ext,
+                "features": vars(f),
+                "id": entry["id"],
+                "title": f.title,
+            }
+        )
 
     return filtered
 
 
-def search_route(query):
+def search_route(query, limit):
     mydb = connection.connect(
         host=os.environ.get("db_host"),
         database=os.environ.get("db_name"),
@@ -163,7 +170,7 @@ def search_route(query):
     df = pd.read_sql(db_query, mydb)
     mydb.close()  # close the connection
     inv_index = build_index(df)
-    return search(query, inv_index, df)
+    return search(query, limit, inv_index, df)
 
 
 class RankingServer(BaseHTTPRequestHandler):
@@ -178,7 +185,10 @@ class RankingServer(BaseHTTPRequestHandler):
         self.end_headers()
         _, __, query_string = self.path.partition("?")
         parsed_qs = urllib.parse.parse_qs(query_string)
-        result = search_route(parsed_qs["q"][0])
+        result = search_route(
+            parsed_qs["q"][0],
+            int(parsed_qs["limit"][0]) if "limit" in parsed_qs else None,
+        )
         self.wfile.write(json.dumps(result).encode("utf-8"))
 
 
