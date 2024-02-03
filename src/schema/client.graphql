@@ -1,0 +1,30 @@
+type TypeaheadNode {
+  title: String
+  recipe: Recipe
+}
+
+type TypeaheadEdge {
+  cursor: String
+  node: TypeaheadNode
+}
+
+type PageInfo {
+  startCursor: String
+  hasPreviousPage: Boolean
+  hasNextPage: Boolean
+  endCursor: String
+}
+
+type TypeaheadConnection {
+  count: Int
+  edges: [TypeaheadEdge]
+  pageInfo: PageInfo
+}
+
+type Client {
+  typeahead(first: Int): TypeaheadConnection
+}
+
+extend type User {
+  client: Client
+}

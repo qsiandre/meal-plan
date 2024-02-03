@@ -11,6 +11,7 @@
   "scripts": {
     "relay": "bun run relay-compiler ./relay.config.json",
     "server": "bun run index.ts",
+    "dev-server": "bun --watch index.ts",
     "bundler": "bun run bundle.ts"
   },
   "name": "tradersmealplan",

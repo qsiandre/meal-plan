@@ -1,4 +1,5 @@
 {
+  "include": ["schema.ts", "index.ts", "src/**/*"],
   "compilerOptions": {
     "lib": ["ESNext"],
     "module": "esnext",

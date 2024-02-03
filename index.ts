@@ -1,6 +1,7 @@
 import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
 import { ParsedRecipe, genBrowser, parseDetailURLs } from "./src/scrape/scrape";
+import { Int } from "grats";
 import { sql } from "./src/sql";
 
 declare module "bun" {
@@ -18,12 +19,52 @@ export function me(_: Query): User {
 }
 
 /** @gqlType */
+class SearchResults {
+  constructor(title: string, hint: string | undefined, id: number) {
+    this.title = title;
+    this.hint = hint;
+    this.recipe_id = id;
+  }
+
+  /** @gqlField */
+  title!: string;
+  /** @gqlField */
+  hint!: string | undefined;
+  /** @gqlField */
+  recipe_id!: Int | undefined;
+}
+
+/** @gqlType */
 class User {
   constructor(name: string) {
     this.name = name;
   }
   /** @gqlField */
   name!: string;
+
+  /** @gqlField */
+  async search_recipes(args: {
+    query: string;
+    limit: Int;
+  }): Promise<SearchResults[]> {
+    const response = await fetch(
+      `http://mp-ranker.avohome/search_recipe?q=${args.query}&limit=${args.limit}`
+    );
+    try {
+      const results: {
+        suffix_hint: string | undefined;
+        features: { title: string };
+        id: number;
+      }[] = await response.json();
+      console.log(results);
+      return results.map(
+        (entry) =>
+          new SearchResults(entry.features.title, entry.suffix_hint, entry.id)
+      );
+    } catch {
+      return [];
+    }
+  }
 }
 
 /** @gqlType */
@@ -36,6 +77,11 @@ class Recipe {
     this.time = props.time;
     this.image = props.image;
   }
+  /**
+   * @gqlField
+   * @killsParentOnException
+   */
+  id!: string;
   /**
    * @gqlField
    */
@@ -72,11 +118,16 @@ export type Mutation = unknown;
 /** @gqlField */
 export async function build_recipes(
   _: Mutation,
-  args: { urls: Array<string> }
+  args: { recipe_ids: Array<Int> }
 ): Promise<Recipe[]> {
-  const browser = await genBrowser();
-  const parsed = await parseDetailURLs(browser, args.urls);
-  return parsed.map((r) => new Recipe(r));
+  const respose: Recipe[] = await sql.execute(
+    `select id, url, title, ingredients, serves, time, image from dim_recipes 
+      where id in (:ids)`,
+    {
+      ids: args.recipe_ids,
+    }
+  );
+  return respose.map((r) => ({ ...r, id: r.id.toString() }));
 }
 
 const yoga = createYoga({ schema });

@@ -1,6 +1,4 @@
-import { Suspense, useRef, useState } from "react";
-import { graphql, useMutation } from "react-relay";
-import { AppBuildRecipesMutation } from "./__generated__/AppBuildRecipesMutation.graphql";
+import { useState } from "react";
 import {
   Recipe,
   Review,
@@ -11,6 +9,7 @@ import {
 } from "./Core";
 import { EditableRecipe } from "./EditableRecipe";
 import { PrimaryButton } from "./PrimaryButton";
+import { RecipeSelector } from "./RecipeSelector";
 
 function match<Resolved>(
   matchers: Partial<{
@@ -29,92 +28,6 @@ function match<Resolved>(
       return matchers.review?.(node);
   }
   return null;
-}
-
-function SelectRecipes(props: {
-  recipes: string[];
-  onNextStep: (recipes: Recipe[]) => void;
-}) {
-  const [recipes, setRecipes] = useState<string[]>(props.recipes);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const [commit, isInFlight] = useMutation<AppBuildRecipesMutation>(graphql`
-    mutation AppBuildRecipesMutation($urls: [String!]!) {
-      build_recipes(urls: $urls) {
-        url
-        title
-        image
-        ingredients
-        serves
-        time
-      }
-    }
-  `);
-  return (
-    <Suspense fallback={"Loading..."}>
-      <div>
-        <ul>
-          {recipes.map((r, ix) => (
-            <li key={`${ix}-${r}`}>
-              <span className="cx_rightpad_s">{r}</span>
-              <button
-                onClick={() => setRecipes((rs) => rs.filter((e) => e != r))}
-              >
-                x
-              </button>
-            </li>
-          ))}
-        </ul>
-        <form
-          ref={formRef}
-          onSubmit={(e) => {
-            e.preventDefault();
-            const url = inputRef.current?.value;
-            if (url != null && url.trim().length > 0) {
-              setRecipes((r) => [...r, url.trim()]);
-            }
-            formRef.current?.reset();
-          }}
-        >
-          {isInFlight ? null : (
-            <div className="cx_fullwidth">
-              <input
-                className="recipeSelector_input"
-                ref={inputRef}
-                name="selection"
-                placeholder="Enter URL"
-              ></input>
-              {isInFlight ? null : (
-                <button className="recipeSelector_action">+</button>
-              )}
-            </div>
-          )}
-        </form>
-        {isInFlight ? (
-          "Saving..."
-        ) : (
-          <PrimaryButton
-            disabled={recipes.length == 0}
-            label="Next"
-            onClick={() => {
-              commit({
-                variables: { urls: recipes },
-                onCompleted: (data) => {
-                  const responses = data.build_recipes;
-                  if (responses == null) {
-                    console.error("mutation failed");
-                    return;
-                  }
-                  const recipes: Recipe[] = responses.map((r) => r);
-                  props.onNextStep(recipes);
-                },
-              });
-            }}
-          />
-        )}
-      </div>
-    </Suspense>
-  );
 }
 
 function ReadOnlyRecipes(props: { recipes: string[]; onEdit: () => void }) {
@@ -181,9 +94,18 @@ function ReviewGroceries(props: { review: Review }) {
 }
 
 export function App() {
-  const [node, setNode] = useState<Node>({ step: "select_recipes", urls: [] });
-  const goToSelectRecipes = (urls: string[]) =>
-    setNode({ step: "select_recipes", urls });
+  const [node, setNode] = useState<Node>({
+    step: "select_recipes",
+    recipes: [],
+  });
+  const goToSelectRecipes = (recipes: Recipe[]) =>
+    setNode({
+      step: "select_recipes",
+      recipes: recipes.map((r) => ({
+        recipe_id: parseInt(r.id),
+        title: r.title,
+      })),
+    });
   return (
     <main>
       <h1> Trader Joe's Weekly </h1>
@@ -194,13 +116,13 @@ export function App() {
             edit_ingredients: (edit) => (
               <ReadOnlyRecipes
                 recipes={edit.recipes.map((r) => r.url)}
-                onEdit={() => goToSelectRecipes(edit.recipes.map((r) => r.url))}
+                onEdit={() => goToSelectRecipes(edit.recipes)}
               />
             ),
             select_recipes: (select) => (
-              <SelectRecipes
-                recipes={select.urls}
-                onNextStep={(recipes) => {
+              <RecipeSelector
+                recipes={select.recipes}
+                onNextStep={(recipes: Recipe[]) => {
                   setNode({
                     step: "edit_ingredients",
                     recipes,
@@ -211,9 +133,7 @@ export function App() {
             review: (review) => (
               <ReadOnlyRecipes
                 recipes={review.recipes.map((r) => r.url)}
-                onEdit={() =>
-                  goToSelectRecipes(review.recipes.map((r) => r.url))
-                }
+                onEdit={() => goToSelectRecipes(review.recipes)}
               />
             ),
           },

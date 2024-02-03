@@ -1,8 +1,12 @@
-import { AppBuildRecipesMutation } from "./__generated__/AppBuildRecipesMutation.graphql";
-
-export type Recipe = NonNullable<
-  AppBuildRecipesMutation["response"]["build_recipes"]
->[number];
+export type Recipe = Readonly<{
+  id: string;
+  url: string;
+  title: string;
+  image: string | null | undefined;
+  ingredients: readonly string[] | null | undefined;
+  serves: string | null | undefined;
+  time: string | null | undefined;
+}>;
 
 export type Ingredient = {
   name: string;
@@ -13,7 +17,10 @@ export type Review = {
   recipes: Recipe[];
   ingredients: Ingredient[];
 };
-export type SelectRecipes = { step: "select_recipes"; urls: Array<string> };
+export type SelectRecipes = {
+  step: "select_recipes";
+  recipes: Array<{ recipe_id: number; title: string }>;
+};
 export type EditIngredients = {
   step: "edit_ingredients";
   recipes: Array<Recipe>;
